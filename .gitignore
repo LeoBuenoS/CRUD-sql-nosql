@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Ambiente / segredos
+.env
+.venv/
+
+# Uploads e dados locais
+static/uploads/
+
+# Editor
+.vscode/
+.idea/
