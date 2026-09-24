@@ -13,8 +13,10 @@ from fastapi import (
 )
 from sqlalchemy.orm import Session
 
+from app.core.deps import usuario_atual
 from app.db.postgres import get_db
 from app.models.palestrante import Palestrante
+from app.models.usuario import Usuario
 from app.repositories.palestrante_repository import PalestranteRepository
 from app.schemas.palestrante import PalestranteOut
 from app.services.upload import delete_upload, save_upload
@@ -75,6 +77,7 @@ def criar(
     local: str = Form(...),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
+    _: Usuario = Depends(usuario_atual),
 ):
     try:
         nome_arquivo = save_upload(foto) if foto else None
@@ -107,6 +110,7 @@ def editar(
     local: str = Form(...),
     foto: UploadFile | None = File(None),
     db: Session = Depends(get_db),
+    _: Usuario = Depends(usuario_atual),
 ):
     repo = PalestranteRepository(db)
     p = repo.get(palestrante_id)
@@ -134,7 +138,11 @@ def editar(
 
 
 @router.delete("/{palestrante_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remover(palestrante_id: int, db: Session = Depends(get_db)):
+def remover(
+    palestrante_id: int,
+    db: Session = Depends(get_db),
+    _: Usuario = Depends(usuario_atual),
+):
     repo = PalestranteRepository(db)
     p = repo.get(palestrante_id)
     if not p:

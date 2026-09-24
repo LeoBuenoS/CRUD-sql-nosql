@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.deps import usuario_atual
 from app.db.mongo import get_avaliacoes_collection
 from app.db.postgres import get_db
+from app.models.usuario import Usuario
 from app.repositories.avaliacao_repository import AvaliacaoRepository
 from app.repositories.palestrante_repository import PalestranteRepository
 from app.schemas.avaliacao import AvaliacaoCreate, AvaliacaoOut, AvaliacaoStats
@@ -24,6 +26,7 @@ async def criar(
     payload: AvaliacaoCreate,
     db: Session = Depends(get_db),
     repo: AvaliacaoRepository = Depends(_repo),
+    _: Usuario = Depends(usuario_atual),
 ):
     # O palestrante vive no Postgres; a avaliação, no Mongo.
     # A consistência entre os dois bancos é garantida aqui, no request.

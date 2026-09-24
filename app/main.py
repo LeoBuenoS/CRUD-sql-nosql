@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import avaliacoes, palestrantes
+from app.routers import auth, avaliacoes, palestrantes
 
 STATIC_DIR = Path("static")
 (STATIC_DIR / "uploads").mkdir(parents=True, exist_ok=True)
@@ -25,6 +25,7 @@ app = FastAPI(
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+app.include_router(auth.router)
 app.include_router(palestrantes.router)
 app.include_router(avaliacoes.router)
 

@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.db.postgres import Base
 
 # Importa os models para que o autogenerate enxergue as tabelas.
-from app.models import palestrante  # noqa: F401
+from app.models import palestrante, usuario  # noqa: F401
 
 config = context.config
 

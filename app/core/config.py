@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     mongo_uri: str = "mongodb://localhost:27017"
     mongo_db: str = "catalog"
 
+    # Em produção, defina JWT_SECRET no ambiente — o default só serve para dev.
+    jwt_secret: str = "dev-secret-change-me"
+    jwt_expire_minutes: int = 60
+    # Custo do bcrypt: 12 em produção; os testes baixam para não ficarem lentos.
+    bcrypt_rounds: int = 12
+
     app_env: str = "development"
 
     @property
