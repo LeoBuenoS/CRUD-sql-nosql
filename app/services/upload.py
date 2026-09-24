@@ -6,6 +6,7 @@ Tradução do ProcessaUploadedFile() do controller .NET:
 - aqui salvamos em  static/uploads  com nome  uuid4 + extensão original
 O binário vai para o disco (volume); o banco guarda só o nome do arquivo.
 """
+
 import shutil
 import uuid
 from pathlib import Path

@@ -14,3 +14,12 @@ class AvaliacaoCreate(BaseModel):
 class AvaliacaoOut(AvaliacaoCreate):
     id: str
     criado_em: datetime
+
+
+class AvaliacaoStats(BaseModel):
+    """Resumo das avaliações de um palestrante (agregação no MongoDB)."""
+
+    palestrante_id: int
+    total: int
+    media: float | None = None
+    distribuicao: dict[str, int]  # nota ("1".."5") -> quantidade

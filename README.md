@@ -5,6 +5,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248)
 ![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC)
+[![CI](https://github.com/LeoBuenoS/CRUD-sql-nosql/actions/workflows/ci.yml/badge.svg)](https://github.com/LeoBuenoS/CRUD-sql-nosql/actions/workflows/ci.yml)
 
 API REST para gerenciamento de palestrantes e avaliações de palestras, usando
 **dois bancos por natureza do dado**: PostgreSQL para o dado estruturado do
@@ -16,7 +17,10 @@ palestrante e MongoDB para as avaliações (documentos flexíveis).
 - **CRUD completo** com upload de imagem (arquivo em disco, referência no banco).
 - **Integração entre dois bancos** no mesmo fluxo de request.
 - **Camadas bem separadas** (routers → repositories → models/schemas → db).
-- **Testes automatizados** com pytest.
+- **Agregação no MongoDB** para estatísticas das avaliações.
+- **Busca e paginação** na listagem relacional.
+- **Testes automatizados** com pytest e **CI** no GitHub Actions.
+- **Containerização** da API (Dockerfile + docker compose).
 
 ## Arquitetura
 
@@ -77,6 +81,8 @@ app/
   routers/           # endpoints HTTP
   services/upload.py # gravação/remoção de imagens
 tests/               # pytest
+Dockerfile           # imagem da API
+.github/workflows/   # CI (black + flake8 + pytest)
 \`\`\`
 
 ## Testes
@@ -85,4 +91,6 @@ tests/               # pytest
 make test
 \`\`\`
 
-Os testes de CRUD rodam em SQLite em memória, sem depender do banco de produção.
+A suíte roda sem nenhum banco externo: o lado SQL usa SQLite em memória e o lado
+NoSQL usa um MongoDB falso (`mongomock-motor`), ambos injetados via
+`app.dependency_overrides`. O mesmo comando roda no CI, junto de `black` e `flake8`.

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.models.palestrante import Palestrante
@@ -10,8 +10,17 @@ class PalestranteRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def list(self) -> list[Palestrante]:
-        return list(self.db.scalars(select(Palestrante)))
+    def list(
+        self, q: str | None = None, skip: int = 0, limit: int = 50
+    ) -> list[Palestrante]:
+        stmt = select(Palestrante).order_by(Palestrante.id)
+        if q:
+            # Busca por nome ou local — ILIKE no Postgres, LIKE no SQLite dos testes.
+            termo = f"%{q}%"
+            stmt = stmt.where(
+                or_(Palestrante.nome.ilike(termo), Palestrante.local.ilike(termo))
+            )
+        return list(self.db.scalars(stmt.offset(skip).limit(limit)))
 
     def get(self, palestrante_id: int) -> Palestrante | None:
         return self.db.get(Palestrante, palestrante_id)

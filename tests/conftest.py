@@ -1,9 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
+from mongomock_motor import AsyncMongoMockClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.db.mongo import get_avaliacoes_collection
 from app.db.postgres import Base, get_db
 from app.main import app
 
@@ -31,7 +33,12 @@ def client(tmp_path, monkeypatch):
         finally:
             db.close()
 
+    # SQL em SQLite na memória, NoSQL em um Mongo falso — a suíte roda
+    # sem depender de nenhum banco externo.
+    colecao = AsyncMongoMockClient()["test"]["avaliacoes"]
+
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_avaliacoes_collection] = lambda: colecao
     yield TestClient(app)
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)

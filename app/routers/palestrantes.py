@@ -6,6 +6,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
     status,
@@ -42,8 +43,15 @@ def _serialize(request: Request, p: Palestrante) -> PalestranteOut:
 
 
 @router.get("", response_model=list[PalestranteOut])
-def listar(request: Request, db: Session = Depends(get_db)):
-    return [_serialize(request, p) for p in PalestranteRepository(db).list()]
+def listar(
+    request: Request,
+    q: str | None = Query(None, description="Busca por nome ou local"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    palestrantes = PalestranteRepository(db).list(q=q, skip=skip, limit=limit)
+    return [_serialize(request, p) for p in palestrantes]
 
 
 @router.get("/{palestrante_id}", response_model=PalestranteOut)

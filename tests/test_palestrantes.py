@@ -44,3 +44,37 @@ def test_detalhar_e_remover(client):
     assert client.get(f"/palestrantes/{pid}").status_code == 200
     assert client.delete(f"/palestrantes/{pid}").status_code == 204
     assert client.get(f"/palestrantes/{pid}").status_code == 404
+
+
+def test_editar_troca_os_dados(client):
+    pid = client.post("/palestrantes", data=BASE).json()["id"]
+    novos = {**BASE, "nome": "Grace Hopper", "local": "Auditório 2"}
+    r = client.put(f"/palestrantes/{pid}", data=novos)
+    assert r.status_code == 200
+    assert r.json()["nome"] == "Grace Hopper"
+    assert client.get(f"/palestrantes/{pid}").json()["local"] == "Auditório 2"
+
+
+def test_editar_inexistente_retorna_404(client):
+    assert client.put("/palestrantes/999", data=BASE).status_code == 404
+
+
+def test_listar_filtra_por_busca(client):
+    client.post("/palestrantes", data=BASE)
+    client.post("/palestrantes", data={**BASE, "nome": "Grace Hopper"})
+
+    todos = client.get("/palestrantes").json()
+    assert len(todos) == 2
+
+    encontrados = client.get("/palestrantes", params={"q": "Grace"}).json()
+    assert [p["nome"] for p in encontrados] == ["Grace Hopper"]
+
+    assert client.get("/palestrantes", params={"q": "ninguém"}).json() == []
+
+
+def test_listar_pagina_os_resultados(client):
+    for i in range(3):
+        client.post("/palestrantes", data={**BASE, "nome": f"Palestrante {i}"})
+
+    pagina = client.get("/palestrantes", params={"skip": 1, "limit": 1}).json()
+    assert [p["nome"] for p in pagina] == ["Palestrante 1"]

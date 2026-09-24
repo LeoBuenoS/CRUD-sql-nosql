@@ -18,5 +18,5 @@ class PalestranteOut(PalestranteBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    foto: str | None = None       # nome do arquivo salvo
-    foto_url: str | None = None   # URL pública para exibir a imagem
+    foto: str | None = None  # nome do arquivo salvo
+    foto_url: str | None = None  # URL pública para exibir a imagem
