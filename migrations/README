@@ -1,0 +1,9 @@
+Migrations do PostgreSQL (Alembic).
+
+- `make migrate`              aplica tudo que estiver pendente (upgrade head)
+- `make migration m="texto"`  gera uma nova a partir dos models (autogenerate)
+- `make downgrade`            desfaz a última
+
+A URL do banco vem do .env, via app/core/config.py (ver env.py) — não do alembic.ini.
+Os testes em tests/test_migrations.py rodam este histórico em SQLite e falham
+se os models saírem de sincronia com as migrations.
