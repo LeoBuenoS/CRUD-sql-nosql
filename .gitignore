@@ -10,6 +10,8 @@ __pycache__/
 # Uploads e dados locais
 static/uploads/
 *.db
+.coverage
+htmlcov/
 
 # Editor
 .vscode/

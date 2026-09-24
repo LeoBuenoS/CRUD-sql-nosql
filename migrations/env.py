@@ -3,11 +3,11 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from app.core.config import settings
-from app.db.postgres import Base
+from app.infrastructure.config import settings
+from app.infrastructure.db.postgres import Base
 
-# Importa os models para que o autogenerate enxergue as tabelas.
-from app.models import palestrante, usuario  # noqa: F401
+# Importa os models ORM para que o autogenerate enxergue as tabelas.
+from app.infrastructure.orm import models  # noqa: F401
 
 config = context.config
 

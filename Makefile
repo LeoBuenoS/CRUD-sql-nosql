@@ -9,7 +9,9 @@ help:
 	@echo "migration- cria uma migration a partir dos models (m='mensagem')"
 	@echo "downgrade- desfaz a ultima migration"
 	@echo "run      - inicia a API (http://localhost:8000/docs)"
-	@echo "test     - roda a suite de testes"
+	@echo "test     - roda a suite (unit + integracao, sem banco externo)"
+	@echo "cov      - roda a suite com relatorio de cobertura"
+	@echo "test-db  - roda os testes contra PostgreSQL e MongoDB de verdade"
 	@echo "lint     - flake8"
 	@echo "fmt      - black"
 
@@ -39,6 +41,13 @@ run:
 
 test:
 	pytest -q
+
+cov:
+	pytest -q --cov --cov-fail-under=95
+
+test-db:
+	TEST_POSTGRES_URL=postgresql+psycopg://app:change-me@localhost:5432/catalog \
+	TEST_MONGO_URI=mongodb://localhost:27017 pytest -q -m db
 
 lint:
 	flake8 app tests migrations
