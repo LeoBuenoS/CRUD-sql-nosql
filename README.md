@@ -125,6 +125,24 @@ A senha é guardada como hash **bcrypt** — o banco nunca vê o texto puro. O t
 é um **JWT HS256** com `sub` (e-mail) e `exp`, assinado com `JWT_SECRET` (defina
 no ambiente em produção). No `/docs`, o botão **Authorize** já funciona.
 
+## Validação independente
+
+Este código é escrito com apoio do Claude. Uma revisão feita pelo mesmo modelo
+que escreveu herda os mesmos pontos cegos — então todo diff passa por um
+segundo revisor, de outro fornecedor: um job de CI manda a mudança para o
+**Gemini** e publica a revisão no PR.
+
+O gate é estreito de propósito: só reprova em achado `blocker` **com cenário
+concreto de falha**. Achado vago é rebaixado automaticamente, falha de
+infraestrutura (cota, rede, chave) não trava o merge, e a etiqueta
+`gemini-override` libera um falso positivo. Revisão de LLM é sinal, não
+oráculo — e um gate que reprova por ruído é um gate que alguém desliga.
+
+Para ativar: crie o secret `GEMINI_API_KEY` no repositório. Sem ele, o job
+avisa e passa. Opcionalmente, a variável `GEMINI_MODEL` fixa um modelo; sem
+ela o script escolhe entre os que a conta tem, para não quebrar quando um
+nome é aposentado.
+
 ## Migrations
 
 O schema do PostgreSQL é versionado com **Alembic** — a aplicação não cria
