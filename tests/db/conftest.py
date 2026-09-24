@@ -19,8 +19,6 @@ from sqlalchemy.orm import sessionmaker
 POSTGRES_URL = os.getenv("TEST_POSTGRES_URL")
 MONGO_URI = os.getenv("TEST_MONGO_URI")
 
-pytestmark = pytest.mark.db
-
 
 @pytest.fixture(scope="session")
 def engine_postgres():
