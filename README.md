@@ -4,7 +4,9 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7-47A248)
-![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC)
+![Tests](https://img.shields.io/badge/tests-120%20passing-0A9EDC)
+![Coverage](https://img.shields.io/badge/coverage-%E2%89%A595%25-brightgreen)
+![Architecture](https://img.shields.io/badge/arquitetura-Clean%20Architecture-6E4AFF)
 [![CI](https://github.com/LeoBuenoS/CRUD-sql-nosql/actions/workflows/ci.yml/badge.svg)](https://github.com/LeoBuenoS/CRUD-sql-nosql/actions/workflows/ci.yml)
 
 API REST para gerenciamento de palestrantes e avaliações de palestras, usando
@@ -14,9 +16,12 @@ palestrante e MongoDB para as avaliações (documentos flexíveis).
 ## O que este projeto demonstra
 
 - **Modelagem de dados e escolha de tecnologia**: quando usar relacional vs. documento.
+- **Clean Architecture**: domínio sem framework, portas e adaptadores, com a regra
+  de dependência verificada por teste automatizado.
+- **Documentação de arquitetura no formato TOGAF** (ADM/BDAT) com ADRs — em
+  [`docs/arquitetura/`](docs/arquitetura/).
 - **CRUD completo** com upload de imagem (arquivo em disco, referência no banco).
 - **Integração entre dois bancos** no mesmo fluxo de request.
-- **Camadas bem separadas** (routers → repositories → models/schemas → db).
 - **Autenticação JWT** (bcrypt + OAuth2 password flow) protegendo a escrita.
 - **Migrations versionadas** com Alembic (schema evolui sem `create_all`).
 - **Agregação no MongoDB** para estatísticas das avaliações.
@@ -27,12 +32,29 @@ palestrante e MongoDB para as avaliações (documentos flexíveis).
 ## Arquitetura
 
 ```mermaid
-flowchart LR
-    Cliente -->|HTTP| API[FastAPI]
-    API -->|SQLAlchemy| PG[(PostgreSQL<br/>palestrantes)]
-    API -->|Motor| MG[(MongoDB<br/>avaliacoes)]
-    API -->|arquivos| FS[static/uploads]
+flowchart TB
+    subgraph I["interfaces/http"]
+        R[routers · schemas · deps]
+    end
+    subgraph A["application"]
+        UC[casos de uso]
+    end
+    subgraph D["domain"]
+        EN[entidades · portas · erros]
+    end
+    subgraph INF["infrastructure"]
+        PG[(PostgreSQL)] --- MG[(MongoDB)] --- FS[uploads] --- SEC[bcrypt · JWT]
+    end
+    I --> A --> D
+    INF -.implementa as portas.-> D
 ```
+
+A dependência aponta **sempre para dentro**: o domínio não importa FastAPI,
+SQLAlchemy nem PyJWT — e há teste que falha se alguém furar essa regra
+(`tests/unit/test_arquitetura.py`).
+
+A documentação completa, no formato **TOGAF** (visão, negócio, dados, aplicação,
+tecnologia, lacunas e ADRs), está em [`docs/arquitetura/`](docs/arquitetura/).
 
 **Por que dois bancos:** o palestrante tem estrutura fixa e exige integridade
 (SKU do arquivo, campos obrigatórios) → **PostgreSQL**. As avaliações são
@@ -125,28 +147,44 @@ schema versionado — a validação delas é feita pelos schemas Pydantic.
 
 ```
 app/
-  main.py            # app FastAPI, monta rotas e arquivos estáticos
-  core/config.py     # configuração via .env
-  core/security.py   # bcrypt + emissão/leitura de JWT
-  core/deps.py       # dependência de usuário autenticado
-  db/                # conexões: postgres.py (SQLAlchemy), mongo.py (Motor)
-  models/            # entidades relacionais
-  schemas/           # contratos Pydantic
-  repositories/      # acesso a dados (SQL e NoSQL)
-  routers/           # endpoints HTTP
-  services/upload.py # gravação/remoção de imagens
-migrations/          # Alembic (histórico do schema relacional)
-tests/               # pytest
-Dockerfile           # imagem da API
-.github/workflows/   # CI (black + flake8 + pytest)
+  main.py                  # monta a aplicação a partir das camadas
+  domain/                  # o núcleo: não importa framework nenhum
+    entities/              #   entidades imutáveis com as regras de negócio
+    ports/                 #   contratos (Protocols) do que o domínio precisa
+    errors.py              #   erros de negócio, sem HTTP
+  application/use_cases/   # uma classe por operação de negócio
+  infrastructure/          # adaptadores das portas
+    db/ orm/ repositories/ #   PostgreSQL (SQLAlchemy) e MongoDB (Motor)
+    security/ storage/     #   bcrypt, PyJWT, disco
+    config.py              #   configuração via .env
+  interfaces/http/         # entrega HTTP
+    routers/ schemas/      #   endpoints e contratos de entrada/saída
+    deps.py                #   composition root: amarra portas e adaptadores
+    errors.py              #   erro de domínio -> status HTTP
+migrations/                # Alembic (histórico do schema relacional)
+docs/arquitetura/          # documentação TOGAF + ADRs
+tests/
+  unit/                    #   entidades, casos de uso e regra de dependência
+  integration/             #   API completa, sem banco externo
+  db/                      #   PostgreSQL e MongoDB reais (marcados `db`)
+Dockerfile                 # imagem da API
+.github/workflows/         # CI: qualidade + integração com bancos
 ```
 
 ## Testes
 
 ```bash
-make test
+make test      # 120 testes, segundos, sem depender de banco externo
+make cov       # o mesmo, com relatório de cobertura (mínimo 95%)
+make test-db   # testes contra PostgreSQL e MongoDB de verdade
 ```
 
-A suíte roda sem nenhum banco externo: o lado SQL usa SQLite em memória e o lado
-NoSQL usa um MongoDB falso (`mongomock-motor`), ambos injetados via
-`app.dependency_overrides`. O mesmo comando roda no CI, junto de `black` e `flake8`.
+| Nível | O que prova | Dependências |
+|-------|-------------|--------------|
+| `tests/unit/` | Regras de negócio, casos de uso e a regra de dependência entre camadas | nenhuma |
+| `tests/integration/` | Contrato HTTP, autenticação e as migrations | SQLite + Mongo falso |
+| `tests/db/` | ILIKE, `server_default`, agregação e migrations no banco real | PostgreSQL + MongoDB |
+
+Os testes de `tests/db/` se pulam sozinhos sem as variáveis de ambiente e rodam
+num job dedicado do CI, com os bancos como *services*. O critério e os
+trade-offs estão no [ADR-0006](docs/arquitetura/adr/0006-estrategia-de-testes.md).
