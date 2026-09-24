@@ -4,7 +4,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
-from app.db.postgres import Base, engine
 from app.routers import avaliacoes, palestrantes
 
 STATIC_DIR = Path("static")
@@ -13,7 +12,8 @@ STATIC_DIR = Path("static")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    # O schema do Postgres é criado pelas migrations (`make migrate`),
+    # não pelo create_all: o banco evolui de forma versionada.
     yield
 
 

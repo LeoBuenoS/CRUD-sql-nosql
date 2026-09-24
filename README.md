@@ -17,6 +17,7 @@ palestrante e MongoDB para as avaliações (documentos flexíveis).
 - **CRUD completo** com upload de imagem (arquivo em disco, referência no banco).
 - **Integração entre dois bancos** no mesmo fluxo de request.
 - **Camadas bem separadas** (routers → repositories → models/schemas → db).
+- **Migrations versionadas** com Alembic (schema evolui sem `create_all`).
 - **Agregação no MongoDB** para estatísticas das avaliações.
 - **Busca e paginação** na listagem relacional.
 - **Testes automatizados** com pytest e **CI** no GitHub Actions.
@@ -39,7 +40,7 @@ flexíveis, denormalizadas e de alto volume (autor, nota, comentário, tags) →
 
 ## Stack
 
-Python 3.12 · FastAPI · SQLAlchemy · Motor · PostgreSQL 15 · MongoDB 7 · Docker · pytest
+Python 3.12 · FastAPI · SQLAlchemy · Alembic · Motor · PostgreSQL 15 · MongoDB 7 · Docker · pytest
 
 ## Como rodar
 
@@ -49,6 +50,7 @@ Pré-requisitos: Docker e um ambiente Python 3.12.
 cp .env.example .env
 make up        # sobe PostgreSQL + MongoDB em container
 make install   # instala as dependências
+make migrate   # cria o schema (alembic upgrade head)
 make test      # roda os testes
 make run       # API em http://localhost:8000/docs
 \`\`\`
@@ -68,6 +70,24 @@ A documentação interativa (Swagger) fica em \`/docs\`.
 | POST | \`/avaliacoes\` | Cria avaliação (valida o palestrante no Postgres) |
 | GET | \`/avaliacoes/{palestrante_id}\` | Lista avaliações do palestrante |
 
+## Migrations
+
+O schema do PostgreSQL é versionado com **Alembic** — a aplicação não cria
+tabelas no boot.
+
+```bash
+make migrate                     # aplica as migrations pendentes
+make migration m="nova coluna"   # gera uma a partir dos models
+make downgrade                   # desfaz a última
+```
+
+`tests/test_migrations.py` roda o histórico completo em SQLite e compara o
+schema resultante com os models: se alguém alterar um model e esquecer a
+migration, o CI quebra.
+
+As avaliações ficam no MongoDB e, por serem documentos flexíveis, não têm
+schema versionado — a validação delas é feita pelos schemas Pydantic.
+
 ## Estrutura
 
 \`\`\`
@@ -80,6 +100,7 @@ app/
   repositories/      # acesso a dados (SQL e NoSQL)
   routers/           # endpoints HTTP
   services/upload.py # gravação/remoção de imagens
+migrations/          # Alembic (histórico do schema relacional)
 tests/               # pytest
 Dockerfile           # imagem da API
 .github/workflows/   # CI (black + flake8 + pytest)

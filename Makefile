@@ -1,10 +1,13 @@
-.PHONY: help up down install run test lint fmt docker-up
+.PHONY: help up down install run test lint fmt docker-up migrate migration downgrade
 
 help:
 	@echo "up       - sobe PostgreSQL + MongoDB (docker compose)"
 	@echo "docker-up- sobe a stack completa (API + bancos) em container"
 	@echo "down     - derruba os containers"
 	@echo "install  - instala dependencias de dev"
+	@echo "migrate  - aplica as migrations (alembic upgrade head)"
+	@echo "migration- cria uma migration a partir dos models (m='mensagem')"
+	@echo "downgrade- desfaz a ultima migration"
 	@echo "run      - inicia a API (http://localhost:8000/docs)"
 	@echo "test     - roda a suite de testes"
 	@echo "lint     - flake8"
@@ -22,6 +25,15 @@ down:
 install:
 	pip install -r requirements-dev.txt
 
+migrate:
+	alembic upgrade head
+
+migration:
+	alembic revision --autogenerate -m "$(m)"
+
+downgrade:
+	alembic downgrade -1
+
 run:
 	uvicorn app.main:app --reload
 
@@ -29,7 +41,7 @@ test:
 	pytest -q
 
 lint:
-	flake8 app tests
+	flake8 app tests migrations
 
 fmt:
-	black app tests
+	black app tests migrations

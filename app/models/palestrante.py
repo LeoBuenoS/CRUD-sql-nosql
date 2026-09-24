@@ -17,7 +17,7 @@ class Palestrante(Base):
     __tablename__ = "palestrantes"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    nome: Mapped[str] = mapped_column(String(200))
+    nome: Mapped[str] = mapped_column(String(200), index=True)
     qualificacao: Mapped[str] = mapped_column(String(200))
     experiencia: Mapped[int] = mapped_column(Integer)
     data_palestra: Mapped[date] = mapped_column(Date)

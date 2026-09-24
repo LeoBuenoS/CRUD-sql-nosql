@@ -21,10 +21,10 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Formatação (black)
-        run: black --check app tests
+        run: black --check app tests migrations
 
       - name: Lint (flake8)
-        run: flake8 app tests
+        run: flake8 app tests migrations
 
       - name: Testes (pytest)
         run: pytest -q

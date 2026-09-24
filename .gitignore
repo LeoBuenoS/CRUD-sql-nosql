@@ -9,6 +9,7 @@ __pycache__/
 
 # Uploads e dados locais
 static/uploads/
+*.db
 
 # Editor
 .vscode/
