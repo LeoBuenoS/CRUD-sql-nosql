@@ -41,10 +41,17 @@ reportada: número de cobertura que ninguém bloqueia vira enfeite.
 
 - Os falsos podem divergir do comportamento real (foi por isso que `tests/db/`
   existe: a divergência fica coberta onde importa).
+
+  Na primeira execução do CI isso se provou na prática: o `tests/db/` pegou um
+  bug que o Mongo falso escondia. A listagem de avaliações ordenava em Python
+  por `criado_em`, mas o MongoDB guarda datetime com precisão de
+  **milissegundo** — duas avaliações do mesmo milissegundo empatavam e saíam em
+  ordem arbitrária. A correção moveu a ordenação para o banco, com desempate
+  por `_id`.
 - Duas configurações de teste para manter.
 - O job com bancos é mais lento e pode falhar por infraestrutura, não por código.
 
 ## Estado atual
 
-111 testes rápidos + 9 contra bancos reais; cobertura de **98,8%**, mínimo
+111 testes rápidos + 10 contra bancos reais; cobertura de **98,8%**, mínimo
 exigido de 95%.

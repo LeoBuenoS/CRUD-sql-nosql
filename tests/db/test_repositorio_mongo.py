@@ -4,6 +4,9 @@ Vale principalmente pelo pipeline de agregação: um fake pode aceitar um
 pipeline que o Mongo real recusaria.
 """
 
+from dataclasses import replace
+from datetime import datetime, timezone
+
 import pytest
 
 from app.domain.entities.avaliacao import Avaliacao, EstatisticasDeAvaliacao
@@ -40,6 +43,19 @@ async def test_listagem_e_por_palestrante_e_mais_recente_primeiro(colecao_mongo)
     primeira = await repo.criar(_avaliacao(4))
     segunda = await repo.criar(_avaliacao(2))
     await repo.criar(_avaliacao(5, palestrante_id=2))
+
+    listadas = await repo.listar_por_palestrante(1)
+
+    assert [a.id for a in listadas] == [segunda.id, primeira.id]
+
+
+async def test_ordem_estavel_no_mesmo_milissegundo(colecao_mongo):
+    """O Mongo trunca datetime em milissegundos: sem desempate, duas
+    avaliações do mesmo instante sairiam em ordem arbitrária."""
+    repo = AvaliacaoRepositorioMongo(colecao_mongo)
+    instante = datetime.now(timezone.utc)
+    primeira = await repo.criar(replace(_avaliacao(3), criado_em=instante))
+    segunda = await repo.criar(replace(_avaliacao(4), criado_em=instante))
 
     listadas = await repo.listar_por_palestrante(1)
 

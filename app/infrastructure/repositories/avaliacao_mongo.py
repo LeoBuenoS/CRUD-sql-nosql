@@ -10,12 +10,14 @@ class AvaliacaoRepositorioMongo:
         self.collection = collection
 
     async def listar_por_palestrante(self, palestrante_id: int) -> list[Avaliacao]:
-        documentos = [
-            self._para_entidade(d)
-            async for d in self.collection.find({"palestrante_id": palestrante_id})
-        ]
-        documentos.sort(key=lambda a: a.criado_em, reverse=True)
-        return documentos
+        # A ordenação é do banco, não do Python: além de escalar com o volume,
+        # o desempate por _id garante ordem estável. O Mongo guarda datetime
+        # com precisão de milissegundo, então duas avaliações do mesmo
+        # milissegundo empatam em `criado_em` — e o _id, monotônico, decide.
+        cursor = self.collection.find({"palestrante_id": palestrante_id}).sort(
+            [("criado_em", -1), ("_id", -1)]
+        )
+        return [self._para_entidade(documento) async for documento in cursor]
 
     async def criar(self, avaliacao: Avaliacao) -> Avaliacao:
         documento = {
